@@ -19,6 +19,7 @@
 #include <bpf.h>
 #include <libbpf.h>
 #include <xdp/libxdp.h>
+#include <mysql/mysql.h>
 
 #include "xdpfw.h"
 #include "config.h"
@@ -32,6 +33,49 @@ static int statsmap = -1;
 void signalHndl(int tmp)
 {
     cont = 0;
+}
+
+// mysql vars
+MYSQL* conn;
+MYSQL_REQ* res;
+MYSQL_ROW* row;
+char* hostanme = "localhost"
+char* user = "root"
+char* password = ""
+char* db = "xdpfw_db"
+
+int mysql_connect(char* host, char* user, char* password, char* db){
+    // Initialize MYSQL
+    conn = mysql_init(NULL)
+    if(conn == NULL){
+        fprintf(stderr, "mysql_init() failed\n");
+        return 1;
+    }
+    // Connect to database
+    if(mysql_real_connect(conn, host, user, password, db, 0, NULL, 0) == NULL){
+        fprintf(stderr, "mysql_real_connect() failed\n");
+        mysql_close(conn);
+        return 1;
+    }
+}
+
+int mysql_exec_query(char* query){
+    // Execute a query
+    if (mysql_query(conn, query)) {
+        fprintf(stderr, "%s failed. Error: %s\n", query, mysql_error(conn));
+        mysql_close(conn);
+        return 1;
+    }
+}
+
+MYSQL_ROW* mysql_result(){
+    res = mysql_store_result(conn)
+    if (res == NULL) {
+        fprintf(stderr, "mysql_store_result() failed. Error: %s\n", mysql_error(conn));
+        mysql_close(conn);
+        return NULL;
+    }
+    return res;
 }
 
 /**
@@ -294,6 +338,11 @@ int main(int argc, char *argv[])
         return EXIT_SUCCESS;
     }
 
+    // database connection
+    if(mysql_connect(hostanme, user, password, db)){
+        return EXIT_SUCCESS;
+    }
+
     // Raise RLimit.
     struct rlimit rl = {RLIM_INFINITY, RLIM_INFINITY};
 
@@ -341,6 +390,10 @@ int main(int argc, char *argv[])
             fprintf(stdout, "\tEnabled => %d\n", cfg.filters[i].enabled);
             fprintf(stdout, "\tAction => %d (0 = Block, 1 = Allow).\n\n", cfg.filters[i].action);
 
+            // send filter into mysql database
+            char query[256]
+            sprintf(query, "INSERT INTO filters VALUES (%d, %d)",cfg.filters[i].srcip, cfg.filters[i].dstip);
+            mysql_exec_query(query)
             // IP Options.
             fprintf(stdout, "\tIP Options\n");
 
@@ -543,6 +596,7 @@ int main(int argc, char *argv[])
                 allowed += stats[i].allowed;
                 dropped += stats[i].dropped;
                 passed += stats[i].passed;
+                // insert stats into database
             }
 
             fflush(stdout);

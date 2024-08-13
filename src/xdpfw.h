@@ -96,40 +96,27 @@ struct icmpopts
 struct filter
 {
     __u8 id;
-
     unsigned int enabled : 1;
-
     __u8 action;
-
     __u32 srcip;
     __u32 dstip;
-
     __u32 srcip6[4];
     __u32 dstip6[4];
-
     unsigned int do_min_ttl : 1;
     __u8 min_ttl;
-
     unsigned int do_max_ttl : 1;
     __u8 max_ttl;
-
     unsigned int do_min_len : 1;
     __u16 min_len;
-
     unsigned int do_max_len : 1;
     __u16 max_len;
-
     unsigned int do_tos : 1;
     int8_t tos;
-
     unsigned int do_pps : 1;
     __u64 pps;
-
     unsigned int do_bps : 1;
     __u64 bps;
-
     __u64 blocktime;
-
     struct tcpopts tcpopts;
     struct udpopts udpopts;
     struct icmpopts icmpopts;

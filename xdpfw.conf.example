@@ -5,6 +5,9 @@ stdout_update_time = 1000;
 filters = (
     {
         enabled = true,
-        action = 1
+        action = 1,
+        tcp = true,
+        srcip = 10.0.0..1,
+        dstip = 124.0.0.2
     }
 );

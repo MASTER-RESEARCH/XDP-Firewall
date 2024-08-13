@@ -128,7 +128,8 @@ int xdp_prog_main(struct xdp_md *ctx)
     }
     
     // Check IP header protocols.
-    if ((iph6 && iph6->nexthdr != IPPROTO_UDP && iph6->nexthdr != IPPROTO_TCP && iph6->nexthdr != IPPROTO_ICMP) && (iph && iph->protocol != IPPROTO_UDP && iph->protocol != IPPROTO_TCP && iph->protocol != IPPROTO_ICMP))
+    if ((iph6 && iph6->nexthdr != IPPROTO_UDP && iph6->nexthdr != IPPROTO_TCP && iph6->nexthdr != IPPROTO_ICMP) && 
+    (iph && iph->protocol != IPPROTO_UDP && iph->protocol != IPPROTO_TCP && iph->protocol != IPPROTO_ICMP))
     {
         return XDP_PASS;
     }
@@ -268,7 +269,7 @@ int xdp_prog_main(struct xdp_md *ctx)
                 // Scan UDP header.
                 udph = (data + sizeof(struct ethhdr) + sizeof(struct ipv6hdr));
 
-                // Check TCP header.
+                // Check UDP header.
                 if (unlikely(udph + 1 > (struct udphdr *)data_end))
                 {
                     return XDP_DROP;
@@ -334,43 +335,40 @@ int xdp_prog_main(struct xdp_md *ctx)
     for (__u8 i = 0; i < MAX_FILTERS; i++)
     {
         __u32 key = i;
-
         struct filter *filter = bpf_map_lookup_elem(&filters_map, &key);
-
         // Check if ID is above 0 (if 0, it's an invalid rule).
         if (!filter || filter->id < 1)
         {
             break;
         }
-
         // Check if the rule is enabled.
         if (!filter->enabled)
         {
             continue;
         }
-
         // Do specific IPv6.
         if (iph6)
         {
             // Source address.
-            if (filter->srcip6[0] != 0 && (iph6->saddr.in6_u.u6_addr32[0] != filter->srcip6[0] || iph6->saddr.in6_u.u6_addr32[1] != filter->srcip6[1] || iph6->saddr.in6_u.u6_addr32[2] != filter->srcip6[2] || iph6->saddr.in6_u.u6_addr32[3] != filter->srcip6[3]))
+            if (filter->srcip6[0] != 0 && (iph6->saddr.in6_u.u6_addr32[0] != filter->srcip6[0] || 
+            iph6->saddr.in6_u.u6_addr32[1] != filter->srcip6[1] || iph6->saddr.in6_u.u6_addr32[2] != filter->srcip6[2]
+             || iph6->saddr.in6_u.u6_addr32[3] != filter->srcip6[3]))
             {
                 continue;
             }
-
             // Destination address.
-            if (filter->dstip6[0] != 0 && (iph6->daddr.in6_u.u6_addr32[0] != filter->dstip6[0] || iph6->daddr.in6_u.u6_addr32[1] != filter->dstip6[1] || iph6->daddr.in6_u.u6_addr32[2] != filter->dstip6[2] || iph6->daddr.in6_u.u6_addr32[3] != filter->dstip6[3]))
+            if (filter->dstip6[0] != 0 && (iph6->daddr.in6_u.u6_addr32[0] != filter->dstip6[0] ||
+             iph6->daddr.in6_u.u6_addr32[1] != filter->dstip6[1] || iph6->daddr.in6_u.u6_addr32[2] != filter->dstip6[2] ||
+              iph6->daddr.in6_u.u6_addr32[3] != filter->dstip6[3]))
             {
                 continue;
             }
-
             #ifdef ALLOWSINGLEIPV4V6
             if (filter->srcip != 0 || filter->dstip != 0)
             {
                 continue;
             }
             #endif
-
             // Max TTL length.
             if (filter->do_max_ttl && filter->max_ttl > iph6->hop_limit)
             {
@@ -410,7 +408,8 @@ int xdp_prog_main(struct xdp_md *ctx)
             }
 
             #ifdef ALLOWSINGLEIPV4V6
-            if ((filter->srcip6[0] != 0 || filter->srcip6[1] != 0 || filter->srcip6[2] != 0 || filter->srcip6[3] != 0) || (filter->dstip6[0] != 0 || filter->dstip6[1] != 0 || filter->dstip6[2] != 0 || filter->dstip6[3] != 0))
+            if ((filter->srcip6[0] != 0 || filter->srcip6[1] != 0 || filter->srcip6[2] != 0 || filter->srcip6[3] != 0) || 
+            (filter->dstip6[0] != 0 || filter->dstip6[1] != 0 || filter->dstip6[2] != 0 || filter->dstip6[3] != 0))
             {
                 continue;
             }
